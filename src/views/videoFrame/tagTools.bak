@@ -1,0 +1,174 @@
+export default {
+  data() {
+    return {
+      tool: '',
+      mapObj: '',
+      mapTool: {},
+      // 标注工具选择
+      drawTool: {},
+      featureLayer: {},
+      keyFeature: {}
+    }
+  },
+  methods: {
+    initDrawTool() {
+      // 标注工具选择
+      let tool = this.$refs.drawUL
+      this.featureLayer = new window.Datatang.FeatureLayer()
+      let select = new window.Datatang.Select({ selectMode: window.Datatang.BrowserEvent.CLICK })
+      let modifyTool = new window.Datatang.Modify()
+      // 表单编辑事件
+      let that = this
+      select.addEventListener(window.Datatang.SelectEvent.EventType.SELECT, function (e) {
+        that.keyFeature = e.selectedFeatures
+      })
+      // 示例：回车键结束绘制
+      let finishCondition = function (event) {
+        event.preventDefault()
+        return event.keyCode === 13
+      }
+      // 示例：ESC键撤销上一步绘制
+      let undoCondition = function (event) {
+        return event.keyCode === 27 || event.keyCode === 46
+      }
+      this.drawTool = new window.Datatang.Draw({
+        type: 'point',
+        drawLayer: this.featureLayer, //new window.Datatang.FeatureLayer(),
+        finishCondition: finishCondition,
+        undoCondition: undoCondition
+      })
+      tool.addEventListener('click', (e) => {
+        let value = e.target.attributes['value'].value
+        this.drawTool.drawMode = value
+        this.drawTool.active = true
+        select.active = false
+        if (this.mapTool) {
+          let that = this
+          this.mapTool.addComponents(this.drawTool)
+          this.mapTool.addComponents(modifyTool)
+          this.mapTool.addComponents(select)
+          this.drawTool.addEventListener(window.Datatang.DrawEvent.EventType.DRAW_END, function (e) {
+            let feature = e.feature
+            // that.onDrawEndPoint(e)
+            feature.displayText = '测试测试'
+            select.active = true
+            that.drawTool.active = false
+            modifyTool.active = true
+          })
+        }
+      })
+      select.active = true
+    },
+
+    // 绘制图形
+    getAssistLineForRectByOnePoint(rect, drawToolPoint) {
+      if (rect === null || rect === undefined) {
+        alert('请先选择一个分割图形！')
+        return
+      }
+
+      var x = drawToolPoint.x
+      var y = drawToolPoint.y
+
+      if (!rect.containsXY(x, y)) {
+        return null
+      }
+
+      var closestOnSegment = window.Datatang.GeometryUtil.closestOnSegment
+      var segment = [[rect.xmin, rect.ymin], [rect.xmax, rect.ymin]]
+
+      var onePointCoord = closestOnSegment([x, y], segment)
+      var otherPointCood = [onePointCoord[0], rect.ymax]
+
+      var line = new window.Datatang.Line()
+      line.setCoordinates([onePointCoord, otherPointCood])
+      return line
+    },
+
+    onDrawEndPoint(e) {
+      var feature = e.feature
+      if (!feature) {
+        return
+      }
+      var assistLine = this.getAssistLineForRectByOnePoint(this.keyFeature.geometry, feature.geometry)
+
+      if (assistLine === undefined) {
+        //添加画的点
+        this.featureLayer.removeFeature(feature)
+        this.drawTool.active = false
+
+        this.mapTool.render()
+        return
+      }
+
+      var assistLineFeature = new window.Datatang.Feature(assistLine)
+      // var index = assistLineFeature.get('index') || getUid()
+      // //var qualityDates = formQuality.getDate()
+
+      // assistLineFeature.set('index', index)
+      // //assistLineFeature.set('quality', qualityDates)
+      // assistLineFeature.set('relativeAssist', setKeyFeature.get('index'))
+      //添加画的线
+      this.featureLayer.addFeatures([assistLineFeature])
+      //删除画的点
+      this.featureLayer.removeFeature(feature)
+
+      assistLineFeature.displayText = assistLineFeature.get('index') + '-' + assistLineFeature.get('relativeAssist')
+      this.drawTool.active = false
+
+      this.mapTool.render()
+    },
+    // 绘图
+    async videoFrameInit(indexInfo) {
+      // consle.log(this.mapTool)
+      // 画图前先清理用于描绘的canvas
+      this.clearCanvas()
+      let point = new window.Datatang.Point(100, 100)
+      let features = [new window.Datatang.Feature(point)]
+      // 预先设置所需要自动描绘的图例
+      this.featureLayer = new window.Datatang.FeatureLayer({
+        features: features
+      })
+      // console.log(this.imageBase64)
+      //渲染canvas图形的大小
+      let mapextent = [0, 0, indexInfo['imageWidth'], indexInfo['imageHeight']]
+      this.mapTool = new window.Datatang.Map({
+        layers: [
+          this.featureLayer,
+          new window.Datatang.SingleImageLayer({
+            url: this.imageBase64,
+            imageExtent: mapextent,
+            projection: {
+              extent: mapextent
+            }
+          })
+        ],
+        target: 'map',
+        view: new window.Datatang.View({
+          projection: {
+            extent: mapextent
+          },
+          center: window.Datatang.ExtentUtil.getCenter(mapextent),
+          zoom: 2,
+          maxZoom: 8
+        })
+      })
+      // // 绘图工具
+      // let drawTool = new window.Datatang.Draw({
+      //   type: 'point',
+      //   drawLayer: new window.Datatang.FeatureLayer()
+      // })
+      // drawTool.drawMode = this.tool
+      // this.mapTool.addComponents(drawTool)
+      // drawTool.addEventListener(window.Datatang.DrawEvent.EventType.DRAW_END, function (e) {
+      //   let feature = e.feature
+      //   feature.displayText = '测试测试'
+      // })
+    }
+  },
+  mounted() {
+    // console.log(this.$refs.drawUL)
+    //
+    this.initDrawTool()
+  }
+}

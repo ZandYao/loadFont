@@ -1,0 +1,5 @@
+# .eslintrc.js
+dist/*.js
+public/*.js
+public/static/*.js
+webpack.output.js
