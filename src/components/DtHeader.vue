@@ -41,6 +41,7 @@ export default {
   font-family: "BigruixianGBV1.0";
   position: relative;
   width: 100%;
+  border: 1px solid white;
   height: $header-height;
   text-align: left; // color: #b7e6ff;
   z-index: 1990;
@@ -49,6 +50,9 @@ export default {
   left: 0;
   right: 0;
   background-color: $border-color;
+  span{
+    color: white;
+  }
 }
 
 .headerBox .photobox {

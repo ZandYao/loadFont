@@ -4,7 +4,7 @@ export default [
     path: '/videoFrame',
     component: () => import(/* webpackChunkName: "tags/taskList" */ '@/views/videoFrame/VideoFrame.vue'),
     meta: {
-      title: '视频帧标注-项目管理-TECnet数据标注平台',
+      title: '个人项目- canvas绘制',
       permit: []
     }
   }

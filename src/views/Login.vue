@@ -131,6 +131,7 @@
               <p class="autoLogin">
                 <el-checkbox
                   class="mlr10"
+                  @change="remberUsername"
                   v-model="saveUsername"
                 >记住用户名</el-checkbox>
                 <!--<a class="forgotPassword">忘记密码？</a>-->
@@ -184,6 +185,7 @@ import { mapActions, mapMutations } from 'vuex'
 import Api from '@/common/api.js'
 import { randomCode } from '@/common/util.js'
 import { forEach } from 'lodash'
+// import moment from 'moment'
 const codeURL = `${process.env.VUE_APP_API_HOST}/user/randomCode`
 let randomCodes = randomCode
 export default {
@@ -196,7 +198,7 @@ export default {
     },
 
     remberUsername() {
-      window.localStorage.username = this.saveUsername ? this.user.username : ''
+      window.localStorage.remberUsername = this.saveUsername
     },
 
     showTooltip() {
@@ -207,7 +209,26 @@ export default {
         }
       })
     },
-
+    autoLoginFn() {
+      let token = this.$store.state.token
+      if (token && JSON.parse(window.localStorage.remberUsername)) {
+        let userString = window.atob(token.split('.')[1])
+        let userObj = JSON.parse(userString)
+        // let date = moment(userObj.exp * 1000).format('YYYY-MM-DD-h:mm:ss')
+        // let date1 = moment(+new Date()).format('YYYY-MM-DD-h:mm:ss')
+        // console.log(date)
+        let expTime = userObj.exp * 1000
+        // 判断token是否过期
+        if (+new Date() < expTime) {
+          // this.$store.dispatch('refreshToken')
+          const redirect = this.$route.query.redirect
+          this.$router.push(!redirect ? { name: 'index' } : { path: decodeURIComponent(redirect) })
+        }
+        // else {
+        //   msgBoxErr('登陆过期请重新登陆！')
+        // }
+      }
+    },
     submitForm() {
       this.$refs.form.validate(async (valid, invalidFields) => {
         this.invalidFields = invalidFields
@@ -231,43 +252,6 @@ export default {
             .catch(res => {
               this.refreshCode()
             })
-          // const redirect = this.$route.query.redirect
-          // this.loginLoading = true
-          // this.login({
-          //   user: this.user,
-          //   config: {
-          //     params: {
-          //       code: this.user.code,
-          //       randomStr: this.user.randomStr
-          //     },
-          //     headers: {
-          //       'Content-Type': 'application/x-www-form-urlencoded',
-          //       Authorization:
-          //         'Basic ' +
-          //         window.btoa(
-          //           this.user.client_id + ':' + this.user.client_secret
-          //         )
-          //     }
-          //   }
-          // })
-          //   .then(res => {
-          //     this.loginLoading = false
-          //     this.$router.push(
-          //       !redirect
-          //         ? {
-          //           name: 'index'
-          //         }
-          //         : {
-          //           path: decodeURIComponent(redirect)
-          //         }
-          //     )
-
-          //     this.remberUsername()
-          //   })
-          //   .catch(() => {
-          //     this.refreshCode()
-          //     this.loginLoading = false
-          //   })
         }
       })
     },
@@ -280,7 +264,9 @@ export default {
       this.show = false
     }
   },
-
+  beforeMount() {
+    this.autoLoginFn()
+  },
   computed: {
     // ...mapState(['customBaseURL'])
   },

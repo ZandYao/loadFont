@@ -2,45 +2,91 @@
   <footer>
     <div class="bottomBox">
       <ul class="bottomNav">
-        <li v-for="menu in currentMenus" :key="menu.value" >
+        <li
+          v-for="menu in currentMenus"
+          :key="menu.value"
+        >
           <template v-if="menu.routeName">
-            <router-link v-ripple-btn="'a'" :to="{name: menu.routeName}">
-              <i class="iconfont" :class="menu.icon"></i>
+            <router-link
+              v-ripple-btn="'a'"
+              :to="{name: menu.routeName}"
+            >
+              <i
+                class="iconfont"
+                :class="menu.icon"
+              ></i>
               <p>{{menu.name}}</p>
             </router-link>
           </template>
           <template v-else>
-            <a v-ripple-btn="'a'" @click="invokeAction(menu.action)">
-              <i class="iconfont" :class="menu.icon"></i>
+            <a
+              v-ripple-btn="'a'"
+              @click="invokeAction(menu.action)"
+            >
+              <i
+                class="iconfont"
+                :class="menu.icon"
+              ></i>
               <p>{{menu.name}}</p>
             </a>
           </template>
           <!-- 二级菜单 -->
-          <el-row v-if="menu.children" :gutter="50">
+          <el-row
+            v-if="menu.children"
+            :gutter="50"
+          >
             <el-col :span="24">
-              <div :class="{active: $route.name === item.routeName}" v-for="(item,index) in menu.children" :key='index' v-ripple-btn="'.subMenu'" @click="subMenuClick(item)" class="grid-content bg-purple subMenu">{{item.name}}</div>
+              <div
+                :class="{active: $route.name === item.routeName}"
+                v-for="(item,index) in menu.children"
+                :key='index'
+                v-ripple-btn="'.subMenu'"
+                @click="subMenuClick(item)"
+                class="grid-content bg-purple subMenu"
+              >{{item.name}}</div>
             </el-col>
           </el-row>
         </li>
         <li>
           <a v-ripple-btn="'a'">
             <i class="iconfont icon-people"></i>
-            <p>{{user && user.name ? user.principal.username : '未登录'}}</p>
+            <p>{{user && user.mobileNo ? user.mobileNo : '未登录'}}</p>
           </a>
-          <el-row :gutter="50" v-if="user && user.name">
+          <el-row
+            :gutter="50"
+            v-if="user && user.mobileNo"
+          >
             <el-col :span="24">
-              <div v-ripple-btn="'.subMenu'" @click="changePwd" class="grid-content bg-purple subMenu">修改密码</div>
-              <div v-ripple-btn="'.subMenu'" @click="logout" class="grid-content bg-purple subMenu">退出登录</div>
+              <div
+                v-ripple-btn="'.subMenu'"
+                @click="changePwd"
+                class="grid-content bg-purple subMenu"
+              >修改密码</div>
+              <div
+                v-ripple-btn="'.subMenu'"
+                @click="logout"
+                class="grid-content bg-purple subMenu"
+              >退出登录</div>
             </el-col>
           </el-row>
-          <el-row :gutter="50" v-else>
+          <el-row
+            :gutter="50"
+            v-else
+          >
             <el-col :span="24">
-              <div v-ripple-btn="'.subMenu'" @click="$router.push({name: 'login'})" class="grid-content bg-purple subMenu">立即登录</div>
+              <div
+                v-ripple-btn="'.subMenu'"
+                @click="$router.push({name: 'login'})"
+                class="grid-content bg-purple subMenu"
+              >立即登录</div>
             </el-col>
           </el-row>
         </li>
         <li>
-          <a v-ripple-btn="'a'" @click="$router.push({name: 'index'})">
+          <a
+            v-ripple-btn="'a'"
+            @click="$router.push({name: 'index'})"
+          >
             <i class="iconfont icon-home"></i>
             <p>返回</p>
           </a>
@@ -109,9 +155,7 @@ export default {
       // console.log(rootRoute)
 
       return this.menus.map(v => {
-        const secondChildren = rootRoute.children.find(
-          c => c.name === v.routeName
-        )
+        const secondChildren = rootRoute.children.find(c => c.name === v.routeName)
         return {
           visible:
             !secondChildren ||
@@ -119,9 +163,7 @@ export default {
               secondChildren.meta.type === this.$store.state.systemType),
           ...v,
           activeIncludes:
-            secondChildren && secondChildren.children
-              ? secondChildren.children.map(vc => vc.name)
-              : [v.routeName]
+            secondChildren && secondChildren.children ? secondChildren.children.map(vc => vc.name) : [v.routeName]
         }
       })
       // .sort((v1, v2) => v1.index - v2.index)
@@ -151,12 +193,14 @@ export default {
   computed: {
     ...mapState(['tokenTime', 'tokenExpiresIn'])
   },
-
+  mounted() {
+    // console.log(this.$store.state.user.mobileNo)
+  },
   data() {
     return {
       preRoute: null,
       alarmTips: false,
-      user: this.$store.state.user,
+      user: JSON.parse(this.$store.state.user),
       systemType: this.$store.state.systemType,
       changePwdDialogVisible: false,
       currentMenus: this._genMenus()
@@ -193,6 +237,7 @@ export default {
 // }
 
 .bottomNav {
+  // color: white;
   display: inline-block;
   height: $header-height;
   margin: 0 auto;
@@ -279,7 +324,8 @@ export default {
     height: 25px;
     line-height: 25px; // color: #9fd3ee;
     font-size: $font-size-s;
-    color: $primary-font-color;
+    // color: $primary-font-color;
+    color: white;
   }
 }
 </style>
